@@ -4,12 +4,14 @@ package main
 import (
     "fmt"
     "os"
+	"time"
+	"log"
 )
 
 
 type node struct {
 	freq int
-	char string
+	char byte
 	left *node
 	right *node
 }
@@ -30,6 +32,10 @@ func cutNode(cut *node) {
 
 
 func insert(newNode, relativeNode *node, where string) {
+	if newNode == relativeNode {
+		
+		return
+	}
 	if where == "right" {
 		if relativeNode.right != nil{
 			newNode.right = relativeNode.right
@@ -60,16 +66,25 @@ func insert(newNode, relativeNode *node, where string) {
 func moveToHead(newNode *node) {
 	cutNode(newNode)
 	largest := true
-	nextNode := newNode.left
-	for nextNode.left != nil {
+	nextNode := newNode
+	
+	for {
+		largest = true
 		if newNode.freq < nextNode.freq {
 			insert(newNode, nextNode, "right")
 			largest = false
 			break;
 		}
+		if nextNode.left == nil {
+			break
+		}
 		nextNode = nextNode.left
+
 	}
-	if largest {
+	
+	if nextNode == newNode {
+		insert(newNode, newNode.right, "left")
+	} else if largest {
 		insert(newNode, nextNode, "left")
 	}
 
@@ -82,29 +97,39 @@ func initialNodes(filename string) *node {
 		panic(err)
 	}
 	
-	head := &node{freq: 1, char : string(dat[0])}
+	head := &node{freq: 1, char : dat[0]}
 	
 	tail := head
 	for _, letter := range dat[1:]{
-		fmt.Println(string(letter), letter)
 		foundLetter := false
-		newNode := tail 
-		for newNode.left != nil {
-			if newNode.char == string(letter) {
+		newNode := tail
+		
+		// Steps through the nodes from rightmost to leftmost checking if chars match	
+		for {
+			if newNode.char == letter {
 				newNode.freq += 1
 				foundLetter = true
 				moveToHead(newNode)
+				for tail.right != nil{
+					tail = tail.right
+				}
+				break
+			}
+			if newNode.left == nil {
 				break
 			}
 			newNode = newNode.left
-		}
-		
-		if foundLetter{continue}
 			
-		newNode = &node{freq : 1, char : string(letter)}
-		tail.right = newNode
-		newNode.left = tail
-		tail = newNode
+		}
+
+
+		if !foundLetter{
+			newNode = &node{freq : 1, char : letter}
+			tail.right = newNode
+			newNode.left = tail
+			tail = newNode
+		}
+	
 	}
 
 	return tail 
@@ -120,11 +145,11 @@ func createTree(tail *node) (*node, *node){
 	newTreeNode := &node{rightNode.freq + leftNode.freq, leftNode.char + rightNode.char, leftNode, rightNode}
 	newNode := &node{freq : rightNode.freq + leftNode.freq, char : leftNode.char + rightNode.char, left : leftNode.left}
 	moveToHead(newNode)
-	if len(rightNode.char) == 1 {
+	if rightNode.char != 0 {
 		rightNode.left = nil
 		rightNode.right = nil
 	}
-	if len(leftNode.char) == 1 {
+	if leftNode.char != 0 {
 		leftNode.left = nil
 		leftNode.right = nil
 	}
@@ -133,16 +158,14 @@ func createTree(tail *node) (*node, *node){
 		
 
 func main() {
+	start := time.Now()
 	startNode := initialNodes("test.txt")
-	
-dat, _ := os.ReadFile("test.txt")
+	elapsed := time.Since(start)
+	log.Printf("Initial took %s", elapsed)
+
+	dat, _ := os.ReadFile("test.txt")
 	fmt.Println(dat)	
-	treeNode, tail := createTree(startNode)
-	fmt.Println(*treeNode)
-	fmt.Println(*treeNode.right)
-	fmt.Println(*treeNode.left)
-	
-	nextNode := tail
+	nextNode := startNode
 	fmt.Println(*nextNode)
 	for nextNode.left != nil {
 		nextNode = nextNode.left
