@@ -11,7 +11,7 @@ import (
 
 type node struct {
 	freq int
-	char byte
+	char string
 	left *node
 	right *node
 }
@@ -97,34 +97,33 @@ func initialNodes(filename string) *node {
 		panic(err)
 	}
 	
-	head := &node{freq: 1, char : dat[0]}
+	head := &node{freq: 1, char : string(dat[0])}
 	
 	tail := head
 	for _, letter := range dat[1:]{
 		foundLetter := false
-		newNode := tail
-		
+		newNode := head
 		// Steps through the nodes from rightmost to leftmost checking if chars match	
 		for {
-			if newNode.char == letter {
+			if newNode.char == string(letter) {
 				newNode.freq += 1
 				foundLetter = true
 				moveToHead(newNode)
-				for tail.right != nil{
-					tail = tail.right
+				for head.left != nil{
+					head = head.left
 				}
 				break
 			}
-			if newNode.left == nil {
+			if newNode.right == nil {
 				break
 			}
-			newNode = newNode.left
+			newNode = newNode.right
 			
 		}
 
 
 		if !foundLetter{
-			newNode = &node{freq : 1, char : letter}
+			newNode = &node{freq : 1, char : string(letter)}
 			tail.right = newNode
 			newNode.left = tail
 			tail = newNode
@@ -145,11 +144,11 @@ func createTree(tail *node) (*node, *node){
 	newTreeNode := &node{rightNode.freq + leftNode.freq, leftNode.char + rightNode.char, leftNode, rightNode}
 	newNode := &node{freq : rightNode.freq + leftNode.freq, char : leftNode.char + rightNode.char, left : leftNode.left}
 	moveToHead(newNode)
-	if rightNode.char != 0 {
+	if len(rightNode.char) == 1 {
 		rightNode.left = nil
 		rightNode.right = nil
 	}
-	if leftNode.char != 0 {
+	if len(leftNode.char) == 1  {
 		leftNode.left = nil
 		leftNode.right = nil
 	}
@@ -159,12 +158,10 @@ func createTree(tail *node) (*node, *node){
 
 func main() {
 	start := time.Now()
-	startNode := initialNodes("test.txt")
+	startNode := initialNodes("PhdFrom.pdf")
 	elapsed := time.Since(start)
 	log.Printf("Initial took %s", elapsed)
 
-	dat, _ := os.ReadFile("test.txt")
-	fmt.Println(dat)	
 	nextNode := startNode
 	fmt.Println(*nextNode)
 	for nextNode.left != nil {
