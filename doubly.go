@@ -2,8 +2,8 @@ package main
  	
 
 import (
-    "fmt"
-    "os"
+    	"fmt"
+    	"os"
 	"time"
 	"log"
 )
@@ -12,6 +12,7 @@ import (
 type node struct {
 	freq int
 	char string
+	parent *node
 	left *node
 	right *node
 }
@@ -19,7 +20,7 @@ type node struct {
 
 func cutNode(cut *node) {
 	
-	if cut.right == nil {
+ 	if cut.right == nil {
 		cut.left.right = nil
 	} else if cut.left == nil {
 		cut.right.left = nil
@@ -140,10 +141,23 @@ func createTree(tail *node) (*node, *node){
 
 	rightNode := tail
 	leftNode := tail.left
-	tail = leftNode.left
-	newTreeNode := &node{rightNode.freq + leftNode.freq, leftNode.char + rightNode.char, leftNode, rightNode}
-	newNode := &node{freq : rightNode.freq + leftNode.freq, char : leftNode.char + rightNode.char, left : leftNode.left}
-	moveToHead(newNode)
+	newTreeNode := &node{freq : rightNode.freq + leftNode.freq, char : leftNode.char + rightNode.char, left: leftNode, right :rightNode}
+	
+	newNode := &node{freq : rightNode.freq + leftNode.freq, char : leftNode.char + rightNode.char}
+	
+	if leftNode.left != nil {
+		newNode.left = leftNode.left
+		moveToHead(newNode)
+		for {
+			newNode = newNode.right
+			if newNode.right == nil {
+				break
+		}
+	}
+
+	}	
+	
+	
 	if len(rightNode.char) == 1 {
 		rightNode.left = nil
 		rightNode.right = nil
@@ -152,23 +166,43 @@ func createTree(tail *node) (*node, *node){
 		leftNode.left = nil
 		leftNode.right = nil
 	}
- 	return newTreeNode, tail
+	
+	rightNode.parent = newTreeNode
+	leftNode.parent = newTreeNode
+		
+ 	return newTreeNode, newNode
 }
 		
 
+func checkTree(treeTop *node) {
+	
+}
+
+
+
 func main() {
 	start := time.Now()
-	startNode := initialNodes("PhdFrom.pdf")
+	startNode := initialNodes("test.txt")
 	elapsed := time.Since(start)
 	log.Printf("Initial took %s", elapsed)
+	
+	treeNode, tail := createTree(startNode)
+	
+	for tail.left != nil { 
+		startNode = tail
+		treeNode, tail = createTree(startNode)
+	}
 
-	nextNode := startNode
+	fmt.Println(*treeNode)	
+	fmt.Println("\n")	
+	nextNode := tail
+	fmt.Println(tail.right)
 	fmt.Println(*nextNode)
 	for nextNode.left != nil {
 		nextNode = nextNode.left
 		fmt.Println(*nextNode)
 	}
-	
+
 }
 
 
